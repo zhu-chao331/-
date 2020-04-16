@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>品牌列表</title>
+		<link href="css/bootstrap.min.css" rel="stylesheet" />
+		<script src="js/vue-2.4.0.js"></script>
+		<script src="js/axios.min.js"></script>
+	    <script src="js/qs.min.js"></script>
+	</head>
+	<body>
+		<div id="app">
+			<div class="panel panel-primary">
+				<div class="panel-heading">
+					<h3 class="panel-title">添加品牌</h3>
+				</div>
+				<div class="panel-body form-inline">
+					<label>
+						Id:
+						<input type="text" class="form-control" v-model="id">
+					</label>
+					<label>
+						Name:
+						<input type="text" class="form-control" v-model="name">
+					</label>
+					<input type="button" value="添加" class="btn btn-primary" @click="add">
+
+					<label>
+						搜索名称关键字：
+						<input type="text" class="form-control" 
+						  v-model="keywords" >
+					</label>
+				</div>
+			</div>
+
+			<table class="table table-bordered table-hover table-striped">
+				<thead>
+					<tr>
+						<th>Id</th>
+						<th>Name</th>
+						<th>Ctime</th>
+						<th>Operation</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr v-for="brand in search()" :key="brand.id">
+						<td>{{brand.id}}</td>
+						<td>{{brand.name}}</td>
+						<td>{{brand.ctime}}</td>
+						<td><a href="#" @click.prevent="del(brand.id)">删除</a></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		
+		<script>
+			var vm=new Vue({
+				el:'#app',
+				data:{
+					id:'',
+					name:'',
+					keywords:'',
+					list:[]  //存储所有品牌对象的数据
+				},
+				mounted(){//初始化显示完成调用
+					this.getAllBrand();
+				},
+				methods:{
+					getAllBrand(){
+						//发送异步请求，请求后端控制器，获取所有的品牌信息
+						axios.get("allBrands").then(res=>{
+							//console.log(res)
+							this.list=res.data
+						}).catch(err=>{
+							console.log("请求失败")
+						})
+					},
+					del(id){
+						axios.get("delBrand?id="+id).then(res=>{
+							//console.log(res)
+							this.getAllBrand()
+						}).catch(err=>{
+							console.log("请求失败")
+						})
+					},
+					//添加品牌
+					add(){
+						//数据带id和name,json格式的品牌对象
+						var brand={id:this.id,name:this.name}
+						//发送异步请求，请求控制器，完成添加品牌操作
+						//axios.post("addBrand",Qs.stringify(brand)).then(res=>
+						axios.post("addBrand",brand).then(res=>{
+							if(res.data=="成功"){
+								//this.list.push(brand)
+								this.getAllBrand()
+								this.id=this.name=''
+								alert('添加成功')
+							}
+						}).catch(error=>{
+							alert('操作失败')
+						})
+					},
+					search(){
+						//遍历list数组,如果品牌名称包含keywords中的内容,
+						//将品牌添加到新的list中
+						var newList=[]
+						this.list.forEach(brand=>{
+							//alert(brand.name);
+							if(brand.name.includes(this.keywords)){
+								newList.push(brand)
+							}
+						})
+						//alert(newList.length)
+						return newList;
+					}
+				}
+			})
+		</script>
+	</body>
+</html>
